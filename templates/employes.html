@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Employés - HUMA-RH</title>
+    <style>
+        body{font-family:Arial,sans-serif;margin:40px;background:#f5f5f5;}
+        table{border-collapse:collapse;width:100%;margin-top:20px;}
+        th,td{border:1px solid #ddd;padding:12px;text-align:left;}
+        th{background:#4CAF50;color:white;}
+        .btn{padding:8px 12px;margin:2px;border:none;border-radius:4px;cursor:pointer;text-decoration:none;display:inline-block;}
+        .edit{background:#2196F3;color:white;}
+        .delete{background:#f44336;color:white;}
+        .back{background:#666;color:white;}
+        .primary{background:#4CAF50;color:white;}
+        .search-form{background:white;padding:20px;border-radius:8px;margin-bottom:20px;box-shadow:0 2px 5px rgba(0,0,0,0.1);}
+        input[type="text"], select{padding:10px;margin:5px;border:1px solid #ddd;border-radius:4px;}
+        .stats{background:#2196F3;color:white;padding:15px;border-radius:8px;margin-bottom:20px;text-align:center;}
+    </style>
+</head>
+<body>
+{% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div style="padding:15px;margin:20px;background:#d4edda;color:#155724;border-radius:8px;border-left:4px solid #28a745;">
+                {{ message }}
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+<h1>📋 Liste des Employés ({{ employees|length }})</h1>
+<div class="stats">👥 Total : {{ total_employes }} | 💰 Salaire moyen : {{ "%.2f"|format(salaire_moyen) }}€</div>
+
+<a href="/" class="btn back">🏠 Accueil</a>
+<a href="/ajouter" class="btn primary">➕ Ajouter</a>
+
+<div class="search-form">
+    <form method="GET">
+        <input type="text" name="recherche" placeholder="🔍 Recherche (nom/prénom/email)" value="{{ recherche or '' }}">
+        <select name="departement">
+            <option value="">Tous départements</option>
+            <option value="IT" {% if departement == 'IT' %}selected{% endif %}>IT</option>
+            <option value="RH" {% if departement == 'RH' %}selected{% endif %}>RH</option>
+            <option value="Finance" {% if departement == 'Finance' %}selected{% endif %}>Finance</option>
+            <option value="Marketing" {% if departement == 'Marketing' %}selected{% endif %}>Marketing</option>
+        </select>
+        <input type="number" name="salaire_min" placeholder="Salaire min (€)" value="{{ salaire_min or '' }}" style="width:150px;">
+        <button type="submit" class="btn primary">🔍 Filtrer</button>
+        <a href="/employes" class="btn back">🔄 Tout afficher</a>
+    </form>
+</div>
+
+{% if employees %}
+<table>
+<tr><th>ID</th><th>Nom</th><th>Prénom</th><th>Email</th><th>Poste</th><th>Salaire</th><th>Dépt</th><th>Date</th><th>Actions</th></tr>
+{% for employe in employees %}
+<tr>
+<td>{{ employe['id'] }}</td>
+<td>{{ employe['nom'] }}</td>
+<td>{{ employe['prenom'] }}</td>
+<td>{{ employe['email'] }}</td>
+<td>{{ employe['poste'] }}</td>
+<td style="font-weight:bold;color:#4CAF50;">{{ "%.2f"|format(employe['salaire']) }}€</td>
+<td><span style="background:#e3f2fd;padding:4px;border-radius:4px;">{{ employe['departement'] }}</span></td>
+<td>{{ employe['date_embauche'] }}</td>
+<td>
+    <a href="/modifier/{{ employe['id'] }}" class="btn edit">✏️ Modifier</a>
+    <a href="/supprimer/{{ employe['id'] }}" class="btn delete" onclick="return confirm('Supprimer {{ employe.nom }} {{ employe.prenom }} ?')">❌ Supprimer</a>
+</td>
+</tr>
+{% endfor %}
+</table>
+{% else %}
+<div style="text-align:center;padding:60px;color:#666;">
+    <h2>👀 Aucun résultat</h2>
+    <p>Modifiez vos critères de recherche ou <a href="/ajouter" class="btn primary">ajoutez un employé</a></p>
+</div>
+{% endif %}
+</body>
+</html>
