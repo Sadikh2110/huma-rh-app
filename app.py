@@ -260,10 +260,11 @@ def dashboard_stats():
                          top_salaires=top_salaires,
                          evolution=evolution)
 
+
 @app.route('/fix_columns')
 def fix_columns():
     import sqlite3
-    conn = sqlite3.connect("huma_rh.db")  # mets ici le même nom de fichier que dans le reste de ton code
+    conn = sqlite3.connect("huma_rh.db")  # même nom que dans le reste du code
     cursor = conn.cursor()
     try:
         cursor.execute("ALTER TABLE employees ADD COLUMN departement TEXT")
@@ -275,6 +276,7 @@ def fix_columns():
     finally:
         conn.close()
     return msg
+
 
 @app.route('/export/csv')
 @login_required
