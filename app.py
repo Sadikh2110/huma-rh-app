@@ -11,19 +11,21 @@ import sqlite3
 
 # Création de la base si elle n'existe pas
 def init_db():
-    conn = sqlite3.connect("huma_rh.db")  # si ton fichier s'appelle autrement, mets le bon nom ici
+    conn = sqlite3.connect("huma_rh.db")  # même nom que partout dans ton code
     cursor = conn.cursor()
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS employees (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nom TEXT,
             prenom TEXT,
+            departement TEXT,
             poste TEXT,
             salaire REAL
         )
     """)
     conn.commit()
     conn.close()
+
 
 # Appelé au démarrage de l'application
 init_db()
@@ -42,24 +44,6 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
-def init_db():
-    conn = get_db_connection()
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS employees (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nom TEXT NOT NULL,
-            prenom TEXT NOT NULL,
-            email TEXT UNIQUE NOT NULL,
-            telephone TEXT,
-            poste TEXT NOT NULL,
-            salaire REAL NOT NULL,
-            date_embauche DATE NOT NULL,
-            departement TEXT,
-            statut TEXT DEFAULT 'actif'
-        )
-    ''')
-    conn.commit()
-    conn.close()
 
 def login_required(f):
     def wrap(*args, **kwargs):
@@ -220,6 +204,20 @@ def supprimer_employe(employe_id):
         flash('❌ Employé non trouvé !', 'error')
     conn.close()
     return redirect(url_for('liste_employes'))
+@app.route('/init_departements')
+def init_departements():
+    import sqlite3
+    conn = sqlite3.connect("huma_rh.db")  # mets ici exactement le même nom de fichier que partout dans ton code
+    cursor = conn.cursor()
+    try:
+        cursor.execute("ALTER TABLE employees ADD COLUMN departement TEXT")
+        conn.commit()
+        msg = "Colonne departement ajoutée."
+    except Exception as e:
+        msg = f"Erreur (probablement déjà créée) : {e}"
+    finally:
+        conn.close()
+    return msg
 
 @app.route('/stats')
 @login_required
