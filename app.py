@@ -207,17 +207,22 @@ def supprimer_employe(employe_id):
 @app.route('/init_departements')
 def init_departements():
     import sqlite3
-    conn = sqlite3.connect("huma_rh.db")  # mets ici exactement le même nom de fichier que partout dans ton code
+    def init_db():
+    conn = sqlite3.connect(app.py)  # remplace par ton vrai nom de fichier
     cursor = conn.cursor()
-    try:
-        cursor.execute("ALTER TABLE employees ADD COLUMN departement TEXT")
-        conn.commit()
-        msg = "Colonne departement ajoutée."
-    except Exception as e:
-        msg = f"Erreur (probablement déjà créée) : {e}"
-    finally:
-        conn.close()
-    return msg
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS employees (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nom TEXT,
+            prenom TEXT,
+            departement TEXT,
+            poste TEXT,
+            salaire REAL,
+            date_embauche DATE
+        )
+    """)
+    conn.commit()
+    conn.close()
 
 @app.route('/stats')
 @login_required
@@ -254,6 +259,20 @@ def dashboard_stats():
                          depts=depts,
                          top_salaires=top_salaires,
                          evolution=evolution)
+@app.route('/fix_columns')
+def fix_columns():
+    conn = sqlite3.connect (app.py)  # même nom
+    cursor = conn.cursor()
+    try:
+        cursor.execute("ALTER TABLE employees ADD COLUMN departement TEXT")
+        cursor.execute("ALTER TABLE employees ADD COLUMN date_embauche DATE")
+        conn.commit()
+        return "Colonnes ajoutées : departement, date_embauche"
+    except Exception as e:
+        return f"Erreur (colonnes déjà créées ?) : {e}"
+    finally:
+        conn.close()
+
 @app.route('/export/csv')
 @login_required
 def export_csv():
