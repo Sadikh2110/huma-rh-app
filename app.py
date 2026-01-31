@@ -208,7 +208,7 @@ def supprimer_employe(employe_id):
 def init_departements():
     import sqlite3
     def init_db():
-    conn = sqlite3.connect("huma_rh.db")  # remplace par ton vrai nom de fichier
+    conn = sqlite3.connect('huma_rh.db')  # remplace par ton vrai nom de fichier
     cursor = conn.cursor()
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS employees (
@@ -264,7 +264,7 @@ def dashboard_stats():
 @app.route('/fix_columns')
 def fix_columns():
     import sqlite3
-    conn = sqlite3.connect("huma_rh.db")  # même nom que dans le reste du code
+    conn = sqlite3.connect('huma_rh.db')  # même nom que dans le reste du code
     cursor = conn.cursor()
     try:
         cursor.execute("ALTER TABLE employees ADD COLUMN departement TEXT")
