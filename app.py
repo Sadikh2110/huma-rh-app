@@ -7,6 +7,26 @@ import pandas as pd
 from io import BytesIO, StringIO
 import csv
 import datetime
+import sqlite3
+
+# Création de la base si elle n'existe pas
+def init_db():
+    conn = sqlite3.connect("huma_rh.db")  # si ton fichier s'appelle autrement, mets le bon nom ici
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS employees (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nom TEXT,
+            prenom TEXT,
+            poste TEXT,
+            salaire REAL
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+# Appelé au démarrage de l'application
+init_db()
 
 app = Flask(__name__)
 app.secret_key = 'huma-rh-2026-super-secret-key-change-in-production'
