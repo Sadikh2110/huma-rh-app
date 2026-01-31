@@ -263,17 +263,18 @@ def dashboard_stats():
 @app.route('/fix_columns')
 def fix_columns():
     import sqlite3
-    conn = sqlite3.connect("huma_rh.db")  # mets ici le même nom que partout dans ton code
+    conn = sqlite3.connect("huma_rh.db")  # même nom que dans le reste du code
     cursor = conn.cursor()
     try:
         cursor.execute("ALTER TABLE employees ADD COLUMN departement TEXT")
         cursor.execute("ALTER TABLE employees ADD COLUMN date_embauche DATE")
         conn.commit()
-        return "Colonnes ajoutées : departement, date_embauche"
+        msg = "Colonnes ajoutées : departement, date_embauche"
     except Exception as e:
-        return f"Erreur (colonnes déjà créées ?) : {e}"
+        msg = f"Erreur (colonnes déjà créées ?) : {e}"
     finally:
         conn.close()
+    return msg
 
 @app.route('/export/csv')
 @login_required
