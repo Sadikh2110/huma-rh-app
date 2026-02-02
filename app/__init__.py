@@ -3,6 +3,7 @@ from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
 from flask_migrate import Migrate
 from app.config import config
+from .routes.auth import auth_bp
 from app.models import db, User
 import json
 
@@ -18,7 +19,9 @@ def create_app(config_name='default'):
     db.init_app(app)
     login_manager.init_app(app)
     csrf.init_app(app)
-    migrate.init_app(app, db) 
+    migrate.init_app(app, db)
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(employees_bp) 
 
     return app
     
