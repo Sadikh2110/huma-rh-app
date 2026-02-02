@@ -4,6 +4,9 @@ from app.models import db, User
 from app.forms import LoginForm, UserForm
 from functools import wraps
 
+@auth_bp.route('/')
+def home():
+    return redirect(url_for('auth.login'))
 auth_bp = Blueprint('auth', __name__)
 
 def admin_required(f):
