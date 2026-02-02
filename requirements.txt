@@ -3,7 +3,6 @@ flask-sqlalchemy==3.1.1
 flask-wtf==1.2.1
 flask-login==0.6.3
 flask-migrate==4.0.5
-flask add-demo
 python-dotenv==1.0.0
 email-validator==2.1.0
 pandas
