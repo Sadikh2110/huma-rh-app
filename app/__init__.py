@@ -19,6 +19,8 @@ def create_app(config_name='default'):
     login_manager.init_app(app)
     csrf.init_app(app)
     migrate.init_app(app, db)
+
+    return app
     
     login_manager.login_view = 'auth.login'
     login_manager.login_message = '🔐 Veuillez vous connecter pour accéder à cette page.'
