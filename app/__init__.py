@@ -4,6 +4,7 @@ from flask_wtf.csrf import CSRFProtect
 from flask_migrate import Migrate
 from app.config import config
 from .routes.auth import auth_bp
+app.register_blueprint(employees_bp)
 from app.models import db, User
 import json
 
