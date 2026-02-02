@@ -1,79 +1,138 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Employés - HUMA-RH</title>
-    <style>
-        body{font-family:Arial,sans-serif;margin:40px;background:#f5f5f5;}
-        table{border-collapse:collapse;width:100%;margin-top:20px;}
-        th,td{border:1px solid #ddd;padding:12px;text-align:left;}
-        th{background:#4CAF50;color:white;}
-        .btn{padding:8px 12px;margin:2px;border:none;border-radius:4px;cursor:pointer;text-decoration:none;display:inline-block;}
-        .edit{background:#2196F3;color:white;}
-        .delete{background:#f44336;color:white;}
-        .back{background:#666;color:white;}
-        .primary{background:#4CAF50;color:white;}
-        .search-form{background:white;padding:20px;border-radius:8px;margin-bottom:20px;box-shadow:0 2px 5px rgba(0,0,0,0.1);}
-        input[type="text"], select{padding:10px;margin:5px;border:1px solid #ddd;border-radius:4px;}
-        .stats{background:#2196F3;color:white;padding:15px;border-radius:8px;margin-bottom:20px;text-align:center;}
-    </style>
-</head>
-<body>
-{% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-            <div style="padding:15px;margin:20px;background:#d4edda;color:#155724;border-radius:8px;border-left:4px solid #28a745;">
-                {{ message }}
+{% extends "base.html" %}
+{% block title %}Liste des employés - HUMA-RH{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-people"></i> Liste des employés</h2>
+    <div>
+        <a href="{{ url_for('employees.export_csv') }}" class="btn btn-outline-success btn-sm">
+            <i class="bi bi-filetype-csv"></i> CSV
+        </a>
+        <a href="{{ url_for('employees.export_excel') }}" class="btn btn-outline-success btn-sm">
+            <i class="bi bi-file-earmark-excel"></i> Excel
+        </a>
+    </div>
+</div>
+
+<!-- Stats rapides -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <h5>{{ total_employes }} employés</h5>
             </div>
-            {% endfor %}
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <h5>Salaire moyen: {{ "%.2f"|format(salaire_moyen) }} €</h5>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtres -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <input type="text" name="recherche" class="form-control" placeholder="Rechercher..." value="{{ recherche }}">
+            </div>
+            <div class="col-md-3">
+                <select name="departement" class="form-select">
+                    <option value="">Tous les départements</option>
+                    {% for dept in departements %}
+                    <option value="{{ dept }}" {% if departement == dept %}selected{% endif %}>{{ dept }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <input type="number" name="salaire_min" class="form-control" placeholder="Salaire min" value="{{ salaire_min }}">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Filtrer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tableau -->
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Nom</th>
+                    <th>Email</th>
+                    <th>Département</th>
+                    <th>Poste</th>
+                    <th>Salaire</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for emp in employees %}
+                <tr>
+                    <td><strong>{{ emp.nom }}</strong> {{ emp.prenom }}</td>
+                    <td>{{ emp.email }}</td>
+                    <td><span class="badge bg-secondary">{{ emp.departement or '-' }}</span></td>
+                    <td>{{ emp.poste }}</td>
+                    <td>{{ "%.2f"|format(emp.salaire) }} €</td>
+                    <td>
+                        <a href="{{ url_for('employees.historique', id=emp.id) }}" class="btn btn-sm btn-outline-info" title="Historique">
+                            <i class="bi bi-clock-history"></i>
+                        </a>
+                        {% if current_user.can_edit() %}
+                        <a href="{{ url_for('employees.modifier', id=emp.id) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <form action="{{ url_for('employees.supprimer', id=emp.id) }}" method="POST" class="d-inline" 
+                              onsubmit="return confirmDelete('{{ emp.prenom }} {{ emp.nom }}')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4">Aucun employé trouvé</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if pagination.pages > 1 %}
+<nav class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if pagination.has_prev %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('employees.liste', page=pagination.prev_num, recherche=recherche, departement=departement, salaire_min=salaire_min) }}">Précédent</a>
+        </li>
         {% endif %}
-    {% endwith %}
-<h1>📋 Liste des Employés ({{ employees|length }})</h1>
-<div class="stats">👥 Total : {{ total_employes }} | 💰 Salaire moyen : {{ "%.2f"|format(salaire_moyen) }}€</div>
-
-<a href="/" class="btn back">🏠 Accueil</a>
-<a href="/ajouter" class="btn primary">➕ Ajouter</a>
-
-<div class="search-form">
-    <form method="GET">
-        <input type="text" name="recherche" placeholder="🔍 Recherche (nom/prénom/email)" value="{{ recherche or '' }}">
-        <select name="departement">
-            <option value="">Tous départements</option>
-            <option value="IT" {% if departement == 'IT' %}selected{% endif %}>IT</option>
-            <option value="RH" {% if departement == 'RH' %}selected{% endif %}>RH</option>
-            <option value="Finance" {% if departement == 'Finance' %}selected{% endif %}>Finance</option>
-            <option value="Marketing" {% if departement == 'Marketing' %}selected{% endif %}>Marketing</option>
-        </select>
-        <input type="number" name="salaire_min" placeholder="Salaire min (€)" value="{{ salaire_min or '' }}" style="width:150px;">
-        <button type="submit" class="btn primary">🔍 Filtrer</button>
-        <a href="/employes" class="btn back">🔄 Tout afficher</a>
-    </form>
-</div>
-
-{% if employees %}
-<table>
-<tr><th>ID</th><th>Nom</th><th>Prénom</th><th>Email</th><th>Poste</th><th>Salaire</th><th>Dépt</th><th>Date</th><th>Actions</th></tr>
-{% for employe in employees %}
-<tr>
-<td>{{ employe['id'] }}</td>
-<td>{{ employe['nom'] }}</td>
-<td>{{ employe['prenom'] }}</td>
-<td>{{ employe['email'] }}</td>
-<td>{{ employe['poste'] }}</td>
-<td style="font-weight:bold;color:#4CAF50;">{{ "%.2f"|format(employe['salaire']) }}€</td>
-<td><span style="background:#e3f2fd;padding:4px;border-radius:4px;">{{ employe['departement'] }}</span></td>
-<td>{{ employe['date_embauche'] }}</td>
-<td>
-    <a href="/modifier/{{ employe['id'] }}" class="btn edit">✏️ Modifier</a>
-    <a href="/supprimer/{{ employe['id'] }}" class="btn delete" onclick="return confirm('Supprimer {{ employe.nom }} {{ employe.prenom }} ?')">❌ Supprimer</a>
-</td>
-</tr>
-{% endfor %}
-</table>
-{% else %}
-<div style="text-align:center;padding:60px;color:#666;">
-    <h2>👀 Aucun résultat</h2>
-    <p>Modifiez vos critères de recherche ou <a href="/ajouter" class="btn primary">ajoutez un employé</a></p>
-</div>
+        
+        {% for page_num in pagination.iter_pages() %}
+            {% if page_num %}
+            <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('employees.liste', page=page_num, recherche=recherche, departement=departement, salaire_min=salaire_min) }}">{{ page_num }}</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link">...</span></li>
+            {% endif %}
+        {% endfor %}
+        
+        {% if pagination.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('employees.liste', page=pagination.next_num, recherche=recherche, departement=departement, salaire_min=salaire_min) }}">Suivant</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
 {% endif %}
-</body>
-</html>
+{% endblock %}

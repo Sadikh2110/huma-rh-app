@@ -7,25 +7,26 @@ import pandas as pd
 from io import BytesIO, StringIO
 import csv
 import datetime
-import sqlite3
 
 # Création de la base si elle n'existe pas
 def init_db():
-    conn = sqlite3.connect("huma_rh.db")  # même nom que partout dans ton code
+    conn = sqlite3.connect("huma_rh.db")
     cursor = conn.cursor()
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS employees (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nom TEXT,
             prenom TEXT,
+            email TEXT UNIQUE,
+            telephone TEXT,
             departement TEXT,
             poste TEXT,
-            salaire REAL
+            salaire REAL,
+            date_embauche DATE
         )
     """)
     conn.commit()
     conn.close()
-
 
 # Appelé au démarrage de l'application
 init_db()
@@ -43,7 +44,6 @@ def get_db_connection():
     conn = sqlite3.connect('huma_rh.db')
     conn.row_factory = sqlite3.Row
     return conn
-
 
 def login_required(f):
     def wrap(*args, **kwargs):
@@ -204,25 +204,32 @@ def supprimer_employe(employe_id):
         flash('❌ Employé non trouvé !', 'error')
     conn.close()
     return redirect(url_for('liste_employes'))
+
 @app.route('/init_departements')
 def init_departements():
-    import sqlite3
-    def init_db():
-    conn = sqlite3.connect('huma_rh.db')  # remplace par ton vrai nom de fichier
+    conn = sqlite3.connect('huma_rh.db')
     cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS employees (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nom TEXT,
-            prenom TEXT,
-            departement TEXT,
-            poste TEXT,
-            salaire REAL,
-            date_embauche DATE
-        )
-    """)
-    conn.commit()
-    conn.close()
+    try:
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS employees (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nom TEXT,
+                prenom TEXT,
+                email TEXT UNIQUE,
+                telephone TEXT,
+                departement TEXT,
+                poste TEXT,
+                salaire REAL,
+                date_embauche DATE
+            )
+        """)
+        conn.commit()
+        msg = "✅ Table employees créée/vérifiée avec succès !"
+    except Exception as e:
+        msg = f"❌ Erreur : {e}"
+    finally:
+        conn.close()
+    return msg
 
 @app.route('/stats')
 @login_required
@@ -260,23 +267,29 @@ def dashboard_stats():
                          top_salaires=top_salaires,
                          evolution=evolution)
 
-
 @app.route('/fix_columns')
 def fix_columns():
-    import sqlite3
-    conn = sqlite3.connect('huma_rh.db')  # même nom que dans le reste du code
+    conn = sqlite3.connect('huma_rh.db')
     cursor = conn.cursor()
-    try:
-        cursor.execute("ALTER TABLE employees ADD COLUMN departement TEXT")
-        cursor.execute("ALTER TABLE employees ADD COLUMN date_embauche DATE")
-        conn.commit()
-        msg = "Colonnes ajoutées : departement, date_embauche"
-    except Exception as e:
-        msg = f"Erreur (colonnes déjà créées ?) : {e}"
-    finally:
-        conn.close()
-    return msg
-
+    messages = []
+    
+    columns_to_add = [
+        ("departement", "TEXT"),
+        ("date_embauche", "DATE"),
+        ("email", "TEXT"),
+        ("telephone", "TEXT")
+    ]
+    
+    for col_name, col_type in columns_to_add:
+        try:
+            cursor.execute(f"ALTER TABLE employees ADD COLUMN {col_name} {col_type}")
+            messages.append(f"✅ Colonne '{col_name}' ajoutée")
+        except Exception as e:
+            messages.append(f"ℹ️ Colonne '{col_name}' existe déjà ou erreur: {e}")
+    
+    conn.commit()
+    conn.close()
+    return "<br>".join(messages)
 
 @app.route('/export/csv')
 @login_required
@@ -320,7 +333,30 @@ def export_excel():
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         headers={'Content-Disposition': 'attachment;filename=huma_rh.xlsx'}
     )
-# 🔥 COMANDES UTILITAIRES (tape dans PowerShell)
+
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    conn = get_db_connection()
+    
+    # Récupérer les vraies données de la DB
+    depts = conn.execute('''
+        SELECT departement, COUNT(*) as count 
+        FROM employees 
+        WHERE departement IS NOT NULL 
+        GROUP BY departement
+    ''').fetchall()
+    
+    conn.close()
+    
+    departments = [d['departement'] for d in depts]
+    counts = [d['count'] for d in depts]
+    
+    return render_template('dashboard.html', 
+                           departments=departments, 
+                           counts=counts)
+
+# 🔥 COMMANDES UTILITAIRES (tape dans PowerShell)
 @app.cli.command('init')
 def init_command():
     """Initialise la base de données"""
@@ -352,7 +388,7 @@ def reset_command():
 
 @app.cli.command('add-demo')
 def add_demo_command():
-    """Ajoute 10 employés DE TEST"""
+    """Ajoute 5 employés DE TEST"""
     conn = get_db_connection()
     demos = [
         ('Dupont', 'Jean', 'jean.dupont@entreprise.fr', '0123456789', 'Développeur', 3800, '2025-01-15', 'IT'),
@@ -361,25 +397,27 @@ def add_demo_command():
         ('Dubois', 'Sophie', 'sophie.dubois@entreprise.fr', '0112233445', 'Comptable', 3200, '2024-09-20', 'Finance'),
         ('Bernard', 'Luc', 'luc.bernard@entreprise.fr', '', 'Marketing', 3400, '2025-01-01', 'Marketing'),
     ]
+    count = 0
     for nom, prenom, email, tel, poste, salaire, date, dept in demos:
         try:
             conn.execute('INSERT INTO employees (nom, prenom, email, telephone, poste, salaire, date_embauche, departement) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', 
                         (nom, prenom, email, tel, poste, salaire, date, dept))
-        except:
+            count += 1
+        except sqlite3.IntegrityError:
             pass
     conn.commit()
     conn.close()
-    print("✅ 10 employés DE TEST ajoutés !")
+    print(f"✅ {count} employés DE TEST ajoutés !")
 
 @app.cli.command('help')
 def help_command():
     """Affiche toutes les commandes"""
     print("""
-🚀 COMANDES HUMA-RH :
+🚀 COMMANDES HUMA-RH :
   flask init      - Initialise la BDD
   flask stats     - Stats rapides
   flask reset     - SUPPRIME TOUT (⚠️)
-  flask add-demo  - Ajoute 10 employés TEST
+  flask add-demo  - Ajoute 5 employés TEST
   flask help      - Cette aide
     """)
 

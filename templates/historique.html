@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Historique - {{ employee.prenom }} {{ employee.nom }} - HUMA-RH{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="bi bi-clock-history"></i> Historique: {{ employee.prenom }} {{ employee.nom }}</h2>
+            <a href="{{ url_for('employees.liste') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Retour
+            </a>
+        </div>
+        
+        <!-- Infos employé -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>Email:</strong><br>{{ employee.email }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Département:</strong><br>{{ employee.departement or '-' }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Poste:</strong><br>{{ employee.poste }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Salaire:</strong><br>{{ "%.2f"|format(employee.salaire) }} €
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Timeline historique -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Journal des modifications</h5>
+            </div>
+            <div class="card-body">
+                {% if history %}
+                <div class="timeline">
+                    {% for h in history %}
+                    <div class="card mb-3 {% if h.action == 'create' %}border-success{% elif h.action == 'delete' %}border-danger{% else %}border-warning{% endif %}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    {% if h.action == 'create' %}
+                                    <span class="badge bg-success"><i class="bi bi-plus-circle"></i> Création</span>
+                                    {% elif h.action == 'update' %}
+                                    <span class="badge bg-warning text-dark"><i class="bi bi-pencil"></i> Modification</span>
+                                    {% elif h.action == 'delete' %}
+                                    <span class="badge bg-danger"><i class="bi bi-trash"></i> Suppression</span>
+                                    {% endif %}
+                                    
+                                    <span class="ms-2 text-muted">
+                                        par <strong>{{ h.user.username }}</strong>
+                                    </span>
+                                </div>
+                                <small class="text-muted">
+                                    {{ h.timestamp.strftime('%d/%m/%Y à %H:%M') }}
+                                </small>
+                            </div>
+                            
+                            {% if h.changes %}
+                            {% set changes = h.changes | tojson | safe %}
+                            <div class="mt-3">
+                                <small class="text-muted">Détails des modifications:</small>
+                                <ul class="list-unstyled mb-0 mt-1">
+                                    {% for key, value in (h.changes | from_json).items() if h.changes %}
+                                    <li>
+                                        <i class="bi bi-arrow-right text-muted"></i>
+                                        <strong>{{ key }}:</strong>
+                                        <span class="text-danger">{{ value.old }}</span>
+                                        <i class="bi bi-arrow-right"></i>
+                                        <span class="text-success">{{ value.new }}</span>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-4">
+                    <i class="bi bi-info-circle"></i> Aucun historique disponible pour cet employé
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

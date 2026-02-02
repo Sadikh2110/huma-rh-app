@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1>Tableau de bord RH</h1>
+
+<!-- Le graphique -->
+<div style="width: 600px; margin: 20px auto;">
+    <canvas id="employeesChart"></canvas>
+</div>
+
+<!-- Charger Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const ctx = document.getElementById('employeesChart').getContext('2d');
+new Chart(ctx, {
+    type: 'bar',  // ou 'pie', 'line', 'doughnut'
+    data: {
+        labels: {{ departments|tojson }},
+        datasets: [{
+            label: 'Employés par département',
+            data: {{ counts|tojson }},
+            backgroundColor: ['#3498db', '#e74c3c', '#2ecc71', '#f39c12']
+        }]
+    }
+});
+</script>
+
+{% endblock %}

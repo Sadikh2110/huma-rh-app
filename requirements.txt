@@ -1,5 +1,13 @@
-Flask==3.0.3
-Werkzeug==3.0.4
-gunicorn==22.0.0
+flask==3.0.0
+flask-sqlalchemy==3.1.1
+flask-wtf==1.2.1
+flask-login==0.6.3
+flask-migrate==4.0.5
+flask add-demo
+python-dotenv==1.0.0
+email-validator==2.1.0
 pandas
+numpy
 openpyxl
+gunicorn==21.2.0
+werkzeug==3.0.1

@@ -1,55 +1,110 @@
-<!DOCTYPE html>
-<html>
-<head><title>Modifier Employé</title><style>body{font-family:Arial,sans-serif;margin:40px;background:#f5f5f5;}form{max-width:500px;padding:20px;background:white;border-radius:8px;margin:20px auto;box-shadow:0 2px 10px rgba(0,0,0,0.1);}.btn{width:100%;padding:12px;background:#2196F3;color:white;border:none;border-radius:6px;font-size:16px;cursor:pointer;margin-top:10px;}input,select{width:100%;padding:12px;margin:8px 0;border:1px solid #ddd;border-radius:4px;box-sizing:border-box;}</style></head>
-<body>
-<body>
-    <!-- MESSAGES FLASH -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-            <div style="padding:15px;margin:20px;background:#d4edda;color:#155724;border-radius:8px;border-left:4px solid #28a745;">
-                {{ message }}
-            </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+{% extends "base.html" %}
+{% block title %}Modifier {{ employe.prenom }} {{ employe.nom }} - HUMA-RH{% endblock %}
 
-    <!-- BARRE NAVIGATION + CONNEXION -->
-    <div style="background:#4CAF50;color:white;padding:15px;text-align:center;">
-        {% if session.user %}
-            <span>👋 Bonjour, {{ session.user|upper }} !</span>
-            <a href="/logout" style="color:white;margin-left:20px;padding:8px 16px;background:#f44336;border-radius:4px;text-decoration:none;">❌ Déconnexion</a>
-        {% else %}
-            <a href="/login" style="color:white;padding:8px 16px;background:#2196F3;border-radius:4px;text-decoration:none;">🔐 Connexion</a>
-        {% endif %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-warning">
+                <h4 class="mb-0"><i class="bi bi-pencil"></i> Modifier: {{ employe.prenom }} {{ employe.nom }}</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" novalidate>
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.nom.label(class="form-label") }}
+                            {{ form.nom(class="form-control" + (" is-invalid" if form.nom.errors else "")) }}
+                            {% for error in form.nom.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            {{ form.prenom.label(class="form-label") }}
+                            {{ form.prenom(class="form-control" + (" is-invalid" if form.prenom.errors else "")) }}
+                            {% for error in form.prenom.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.email.label(class="form-label") }}
+                            {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), type="email") }}
+                            {% for error in form.email.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            {{ form.telephone.label(class="form-label") }}
+                            {{ form.telephone(class="form-control" + (" is-invalid" if form.telephone.errors else "")) }}
+                            {% for error in form.telephone.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.departement.label(class="form-label") }}
+                            {{ form.departement(class="form-select" + (" is-invalid" if form.departement.errors else "")) }}
+                            {% for error in form.departement.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            {{ form.poste.label(class="form-label") }}
+                            {{ form.poste(class="form-control" + (" is-invalid" if form.poste.errors else "")) }}
+                            {% for error in form.poste.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.salaire.label(class="form-label") }}
+                            <div class="input-group">
+                                {{ form.salaire(class="form-control" + (" is-invalid" if form.salaire.errors else ""), step="0.01", min="0") }}
+                                <span class="input-group-text">€</span>
+                            </div>
+                            {% for error in form.salaire.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            {{ form.date_embauche.label(class="form-label") }}
+                            {{ form.date_embauche(class="form-control" + (" is-invalid" if form.date_embauche.errors else ""), type="date") }}
+                            {% for error in form.date_embauche.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('employees.liste') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Annuler
+                        </a>
+                        <div>
+                            <a href="{{ url_for('employees.historique', id=employe.id) }}" class="btn btn-outline-info">
+                                <i class="bi bi-clock-history"></i> Historique
+                            </a>
+                            <button type="submit" class="btn btn-warning">
+                                <i class="bi bi-check-lg"></i> Enregistrer les modifications
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
-
-{% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-            <div style="padding:15px;margin:20px;background:#d4edda;color:#155724;border-radius:8px;border-left:4px solid #28a745;">
-                {{ message }}
-            </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-<h1 style="text-align:center;">✏️ Modifier {{ employe.nom }} {{ employe.prenom }}</h1>
-<a href="/employes" style="display:inline-block;padding:10px;background:#666;color:white;text-decoration:none;border-radius:4px;">📋 Retour</a>
-<form method="POST">
-    <input name="nom" value="{{ employe.nom }}" placeholder="Nom" required>
-    <input name="prenom" value="{{ employe.prenom }}" placeholder="Prénom" required>
-    <input name="email" type="email" value="{{ employe.email }}" placeholder="Email" required>
-    <input name="telephone" value="{{ employe.telephone or '' }}" placeholder="Téléphone">
-    <input name="poste" value="{{ employe.poste }}" placeholder="Poste" required>
-    <input name="salaire" type="number" step="0.01" value="{{ employe.salaire }}" placeholder="Salaire" required>
-    <input name="date_embauche" value="{{ employe.date_embauche }}" type="date" required>
-    <select name="departement">
-        <option value="IT" {% if employe.departement == 'IT' %}selected{% endif %}>IT</option>
-        <option value="RH" {% if employe.departement == 'RH' %}selected{% endif %}>RH</option>
-        <option value="Finance" {% if employe.departement == 'Finance' %}selected{% endif %}>Finance</option>
-        <option value="Marketing" {% if employe.departement == 'Marketing' %}selected{% endif %}>Marketing</option>
-    </select>
-    <button type="submit">💾 Enregistrer Modifications</button>
-</form>
-</body>
-</html>
+</div>
+{% endblock %}
