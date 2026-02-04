@@ -6,9 +6,14 @@ from functools import wraps
 
 auth_bp = Blueprint('auth', __name__)
 
-@auth_bp.route('/')
+@auth_bp.route("/")
 def home():
-    return redirect(url_for('auth.login'))
+    if current_user.is_authenticated:
+        # Utilisateur déjà connecté → aller sur la page principale
+        return redirect(url_for("employees.index"))
+    # Pas connecté → aller sur la page de login
+    return redirect(url_for("auth.login"))
+
 
 def admin_required(f):
     @wraps(f)
