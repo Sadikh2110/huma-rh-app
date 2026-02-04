@@ -3,60 +3,57 @@ from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
 from flask_migrate import Migrate
 from app.config import config
-from .routes.auth import auth_bp
-app.register_blueprint(employees_bp)
 from app.models import db, User
+from app.routes.auth import auth_bp
+from app.routes.employees import employees_bp
+from app.routes.stats import stats_bp
 import json
 
 login_manager = LoginManager()
 csrf = CSRFProtect()
 migrate = Migrate()
 
+
 def create_app(config_name='default'):
     app = Flask(__name__, template_folder='../templates', static_folder='../static')
     app.config.from_object(config[config_name])
-    
+
     # Initialiser les extensions
     db.init_app(app)
     login_manager.init_app(app)
     csrf.init_app(app)
     migrate.init_app(app, db)
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(employees_bp) 
 
-    return app
-    
+    # Config LoginManager
     login_manager.login_view = 'auth.login'
     login_manager.login_message = '🔐 Veuillez vous connecter pour accéder à cette page.'
     login_manager.login_message_category = 'error'
-    
+
+    # User loader
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
-    
+
     # Filtre personnalisé pour parser JSON dans les templates
     @app.template_filter('from_json')
     def from_json_filter(value):
         try:
             return json.loads(value) if value else {}
-        except:
+        except Exception:
             return {}
-    
+
     # Enregistrer les blueprints
-    from app.routes.auth import auth_bp
-    from app.routes.employees import employees_bp
-    from app.routes.stats import stats_bp
-    
     app.register_blueprint(auth_bp)
     app.register_blueprint(employees_bp)
     app.register_blueprint(stats_bp)
-    
+
     # Créer les tables et l'admin par défaut
     with app.app_context():
         db.create_all()
         create_default_admin()
-    
+
     return app
+
 
 def create_default_admin():
     """Crée un admin par défaut si aucun n'existe"""
